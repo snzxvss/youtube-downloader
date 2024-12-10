@@ -1,7 +1,6 @@
 const fs = require('fs');
 const ytdl = require("@distube/ytdl-core");
 const ffmpeg = require('fluent-ffmpeg');
-const HttpsProxyAgent = require('https-proxy-agent');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 if (!fs.existsSync('cache/')) {
@@ -11,15 +10,10 @@ if (!fs.existsSync('cache/')) {
 const status = {};
 
 async function getFormats(url) {
-  console.log('Getting formats for URL:', url);
   const info = await getVideoInfo(url);
-  if (info.error) {
-    console.log('Error getting video info:', info.error);
-    return info;
-  }
+  if (info.error) return info;
 
   const formats = info.formats;
-  console.log('Formats retrieved:', formats);
 
   return {
     video: formats.filter(e => e.fileType == 'VIDEO' && e.extension != 'DAT' && e.videoCodec != 'H.264').map(e => [e.extension, e.quality, e.itag])
@@ -43,30 +37,21 @@ async function getVideoInfo(url) {
   try {
     id = ytdl.getVideoID(url);
   } catch (e) {
-    console.log('Invalid URL:', e);
+    console.log('Invalid URL');
     return {
       error: 'Invalid URL'
-    };
+    }
   }
 
   console.log(`Identified id ${id}.`);
 
   if (fs.existsSync('cache/' + id + '.json')) {
-    console.log('Cache hit for id:', id);
     return JSON.parse(fs.readFileSync('cache/' + id + '.json'));
   }
 
-  let cookies = [];
-  try {
-    cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
-  } catch (e) {
-    console.log('No cookies.json file found or invalid JSON format.');
-  }
-  const proxy = 'http://103.21.244.65:80'; // Proxy
+  const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
 
-  console.log('Requesting video info with proxy and cookies...');
-  ytdl.getInfo(id, { requestOptions: { headers: { Cookie: cookies.join('; ') }, agent: new HttpsProxyAgent(proxy) } }).then(info => {
-    console.log('Video info retrieved:', info);
+  ytdl.getInfo(id, { requestOptions: { headers: { Cookie: cookies.join('; ') } } }).then(info => {
     output = {
       formats: info.formats.sort((a, b) => b.itag - a.itag).filter((item, pos, ary) => {
         return pos == 0 || item.itag != ary[pos - 1].itag;
@@ -79,10 +64,11 @@ async function getVideoInfo(url) {
       videoDetails: info.videoDetails
     };
   }).catch((e) => {
-    console.log('Error retrieving video info:', e);
+    console.log(e);
+    console.log('Invalid Video ID');
     output = {
       error: 'Invalid Video ID'
-    };
+    }
   });
 
   while (!output) {
@@ -100,7 +86,6 @@ async function downloadVideo(id, itag) {
 
   const info = await getVideoInfo(id);
   if (info.error) {
-    console.log('Error getting video info for download:', info.error);
     return '';
   }
 
@@ -117,15 +102,8 @@ async function downloadVideo(id, itag) {
 
   if (!fs.existsSync(filePath)) {
     let done = false;
-    let cookies = [];
-    try {
-      cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
-    } catch (e) {
-      console.log('No cookies.json file found or invalid JSON format.');
-    }
-    const proxy = 'http://103.21.244.65:80'; // Proxy
-    console.log('Downloading video with proxy and cookies...');
-    ytdl(id, { quality: itag, requestOptions: { headers: { Cookie: cookies.join('; ') }, agent: new HttpsProxyAgent(proxy) } })
+    const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+    ytdl(id, { quality: itag, requestOptions: { headers: { Cookie: cookies.join('; ') } } })
       .pipe(fs.createWriteStream(filePath))
       .on('close', () => done = true);
     
@@ -141,10 +119,8 @@ async function downloadVideo(id, itag) {
 async function downloadVideoFromFormat(id, fileExtension, videoQuality, audioQuality) {
   const identifyingString = id + fileExtension + videoQuality + audioQuality;
 
-  console.log('Downloading video from format with id:', id);
   const info = await getFormats(id);
   if (info.error) {
-    console.log('Error getting formats:', info.error);
     status[identifyingString] = info.error;
     return info;
   }
@@ -160,7 +136,7 @@ async function downloadVideoFromFormat(id, fileExtension, videoQuality, audioQua
         status[identifyingString] = 'Unable to process video.';
         return {
           error: 'Unable to process video.'
-        };
+        }
       }
 
       break;
@@ -176,7 +152,7 @@ async function downloadVideoFromFormat(id, fileExtension, videoQuality, audioQua
         status[identifyingString] = 'Unable to process audio.';
         return {
           error: 'Unable to process audio.'
-        };
+        }
       }
 
       break;
@@ -184,7 +160,7 @@ async function downloadVideoFromFormat(id, fileExtension, videoQuality, audioQua
   }
 
   const filePath = videoPath.substring(0, videoPath.lastIndexOf('.')) + audioPath.substring(audioPath.lastIndexOf('_'));
-  console.log('Output file:', filePath);
+  console.log('Output file: ' + filePath);
 
   if (!fs.existsSync(filePath)) {
     status[identifyingString] = 'Combining video and audio files...';
@@ -196,7 +172,7 @@ async function downloadVideoFromFormat(id, fileExtension, videoQuality, audioQua
       .audioCodec('copy')
       .output(filePath)
       .on('end', () => done = true)
-      .on('error', (err) => console.error('Error combining files:', err.message))
+      .on('error', (err) => console.error(err.message))
       .run();
 
     while (!done) {
