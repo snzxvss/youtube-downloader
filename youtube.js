@@ -49,7 +49,9 @@ async function getVideoInfo(url) {
     return JSON.parse(fs.readFileSync('cache/' + id + '.json'));
   }
 
-  ytdl.getInfo(id).then(info => {
+  const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+
+  ytdl.getInfo(id, { requestOptions: { headers: { Cookie: cookies.join('; ') } } }).then(info => {
     output = {
       formats: info.formats.sort((a, b) => b.itag - a.itag).filter((item, pos, ary) => {
         return pos == 0 || item.itag != ary[pos - 1].itag;
@@ -100,7 +102,8 @@ async function downloadVideo(id, itag) {
 
   if (!fs.existsSync(filePath)) {
     let done = false;
-    ytdl(id, { quality: itag })
+    const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+    ytdl(id, { quality: itag, requestOptions: { headers: { Cookie: cookies.join('; ') } } })
       .pipe(fs.createWriteStream(filePath))
       .on('close', () => done = true);
     
