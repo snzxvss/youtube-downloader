@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="favicon.png">
+  <title>YouTube Downloader</title>
+</head>
+
+<body>
+  <div id="youtube-input-container">
+    <label for="url-input">Enter YouTube URL:</label>
+    <input id="url-input">
+    <button id="url-submit">Submit</button>
+  </div>
+
+  <br><br><br>
+
+  <div id="youtube-video-container">
+    <img id="thumbnail">
+
+    <div id="info">
+      <div id="title">Please enter a YouTube URL or ID above.</div>
+      <div id="channel"></div>
+      <br>
+      <div id="views"></div>
+      <div id="likes"></div>
+      <br>
+      <div id="duration"></div>
+    </div>
+  </div>
+
+  <br><br><br>
+
+  <div id="format-display" style="display: none;">
+    <div class="three-list">
+      <div>Format</div>
+      <div>Video</div>
+      <div>Audio</div>
+    </div>
+
+    <div id="youtube-format-list" class="three-list">
+      <div><select id="extension"></select></div>
+      <div><select id="videoQuality"></select></div>
+      <div><select id="audioQuality"></select></div>
+    </div>
+
+    <div class="three-list">
+      <div></div>
+      <div><button id="downloadVideo">Download</button></div>
+      <div></div>
+    </div>
+
+    <div id="video-status-string">Please click the Download button to start processing the video.</div>
+  </div>
+
+  <br><br>
+</body>
+
+<script src="script.js"></script>
+
+</html>
