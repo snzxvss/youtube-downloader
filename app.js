@@ -36,8 +36,10 @@ app.post('/download', async (req, res) => {
   }
 });
 
-app.listen(9356, () => {
-  console.log('Server opened on http://localhost:9356');
+port = process.env.PORT || 9356;
+
+app.listen(port, () => {
+  console.log('Server opened on http://localhost:' + port);
 });
 
 async function getVideoID(url) {
