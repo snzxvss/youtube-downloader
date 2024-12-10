@@ -1,6 +1,7 @@
 const fs = require('fs');
 const ytdl = require("@distube/ytdl-core");
 const ffmpeg = require('fluent-ffmpeg');
+const HttpsProxyAgent = require('https-proxy-agent');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 if (!fs.existsSync('cache/')) {
@@ -50,8 +51,9 @@ async function getVideoInfo(url) {
   }
 
   const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+  const proxy = 'http://103.21.244.65:80'; // Proxy
 
-  ytdl.getInfo(id, { requestOptions: { headers: { Cookie: cookies.join('; ') } } }).then(info => {
+  ytdl.getInfo(id, { requestOptions: { headers: { Cookie: cookies.join('; ') }, agent: new HttpsProxyAgent(proxy) } }).then(info => {
     output = {
       formats: info.formats.sort((a, b) => b.itag - a.itag).filter((item, pos, ary) => {
         return pos == 0 || item.itag != ary[pos - 1].itag;
@@ -103,7 +105,8 @@ async function downloadVideo(id, itag) {
   if (!fs.existsSync(filePath)) {
     let done = false;
     const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
-    ytdl(id, { quality: itag, requestOptions: { headers: { Cookie: cookies.join('; ') } } })
+    const proxy = 'http://103.21.244.65:80'; // Proxy
+    ytdl(id, { quality: itag, requestOptions: { headers: { Cookie: cookies.join('; ') }, agent: new HttpsProxyAgent(proxy) } })
       .pipe(fs.createWriteStream(filePath))
       .on('close', () => done = true);
     
