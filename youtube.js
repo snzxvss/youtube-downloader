@@ -56,7 +56,12 @@ async function getVideoInfo(url) {
     return JSON.parse(fs.readFileSync('cache/' + id + '.json'));
   }
 
-  const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+  let cookies = [];
+  try {
+    cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+  } catch (e) {
+    console.log('No cookies.json file found or invalid JSON format.');
+  }
   const proxy = 'http://103.21.244.65:80'; // Proxy
 
   console.log('Requesting video info with proxy and cookies...');
@@ -112,7 +117,12 @@ async function downloadVideo(id, itag) {
 
   if (!fs.existsSync(filePath)) {
     let done = false;
-    const cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+    let cookies = [];
+    try {
+      cookies = JSON.parse(fs.readFileSync('cookies.json', 'utf8'));
+    } catch (e) {
+      console.log('No cookies.json file found or invalid JSON format.');
+    }
     const proxy = 'http://103.21.244.65:80'; // Proxy
     console.log('Downloading video with proxy and cookies...');
     ytdl(id, { quality: itag, requestOptions: { headers: { Cookie: cookies.join('; ') }, agent: new HttpsProxyAgent(proxy) } })
